@@ -12,6 +12,12 @@
     <string name="pref_send_guard_summary">Surface preview verification bar before IME_ACTION_SEND</string>
     <string name="pref_hide_soft_kbd_physical">Hide Soft Keyboard on Physical Input</string>
     <string name="pref_hide_soft_kbd_physical_summary">Hide the on-screen keyboard when a physical or remote keyboard is connected (Default: off)</string>
+    <string name="pref_ribbon_visibility">Tri-Split Ribbon Visibility</string>
+    <string name="pref_ribbon_visibility_summary">Show the 3-zone candidate ribbon [Rescue, Primary, Variant]</string>
+    <string name="btn_open_ime_settings">Open System Input Settings ⚙️</string>
+    <string name="btn_choose_active_ime">Choose Active Keyboard 🐾</string>
+    <string name="lbl_apps_script_token">Apps Script Auth Token / Key (Optional)</string>
+    <string name="hint_apps_script_token">Bearer token or access secret</string>
     <string name="pref_data_sync_title">Predictor &amp; Device Data Sync 🐾</string>
     <string name="btn_grant_sms">Grant Sent SMS Permission</string>
     <string name="btn_pick_saf">Pick SAF Notes Folder</string>

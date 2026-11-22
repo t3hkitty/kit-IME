@@ -37,7 +37,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Kit-IME Preferences 🐾"
+                    android:text="Kit-IME Control Hub 🐾"
                     android:textColor="@color/kawaii_lavender"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -45,103 +45,13 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="OnePlus 11 5G • Kawaiian Engine v3.1"
+                    android:text="OnePlus 11 5G • Kawaiian Engine v3.1-Plump"
                     android:textColor="@color/kawaii_pink"
                     android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Switches Container -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@color/kawaii_card_bg"
-            android:padding="12dp"
-            android:layout_marginBottom="16dp">
-
-            <!-- Spacebar + Number Chords Switch -->
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switch_space_chord"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/pref_chord_mode"
-                android:textColor="@color/kawaii_slate"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/pref_chord_mode_summary"
-                android:textColor="#555"
-                android:textSize="12sp"
-                android:layout_marginBottom="12dp" />
-
-            <!-- 2-Letter Greenlighting Switch -->
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switch_greenlight"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/pref_greenlight"
-                android:textColor="@color/kawaii_slate"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/pref_greenlight_summary"
-                android:textColor="#555"
-                android:textSize="12sp"
-                android:layout_marginBottom="12dp" />
-
-            <!-- Soft Bzzt Haptic Switch -->
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switch_soft_bzzt"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/pref_soft_bzzt"
-                android:textColor="@color/kawaii_slate"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/pref_soft_bzzt_summary"
-                android:textColor="#555"
-                android:textSize="12sp"
-                android:layout_marginBottom="12dp" />
-
-            <!-- Pre-Send Guard Switch -->
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switch_send_guard"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/pref_send_guard"
-                android:textColor="@color/kawaii_slate"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/pref_send_guard_summary"
-                android:textColor="#555"
-                android:textSize="12sp" />
-
-        </LinearLayout>
-
-        <!-- Predictor & Device Data Gatherer Control Card -->
+        <!-- 1. System IME Setup & Picker Card -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -153,7 +63,306 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/pref_data_sync_title"
+                android:text="1. System Keyboard Activation ⚙️"
+                android:textColor="@color/kawaii_slate"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="6dp" />
+
+            <!-- Live Status Badges -->
+            <TextView
+                android:id="@+id/txt_ime_enabled_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="⏳ [IME Enabled: Checking...]"
+                android:textColor="@color/kawaii_indigo"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="2dp" />
+
+            <TextView
+                android:id="@+id/txt_ime_selected_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="⏳ [IME Selected: Checking...]"
+                android:textColor="@color/kawaii_indigo"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp" />
+
+            <!-- Action 1: Open System Input Settings -->
+            <Button
+                android:id="@+id/btn_open_ime_settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_open_ime_settings"
+                android:textColor="@color/kawaii_gold"
+                android:backgroundTint="@color/kawaii_indigo"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Action 2: Choose Active Keyboard -->
+            <Button
+                android:id="@+id/btn_choose_active_ime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_choose_active_ime"
+                android:textColor="@color/kawaii_slate"
+                android:backgroundTint="@color/kawaii_lavender" />
+        </LinearLayout>
+
+        <!-- 2. Typing, Ribbon, Haptics & Send Guard Controls -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/kawaii_card_bg"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2. Typing Engine &amp; Feedback Controls 🌸"
+                android:textColor="@color/kawaii_slate"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="6dp" />
+
+            <!-- Tri-Split Ribbon Visibility Switch -->
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switch_ribbon_visibility"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pref_ribbon_visibility"
+                android:textColor="@color/kawaii_slate"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pref_ribbon_visibility_summary"
+                android:textColor="#555"
+                android:textSize="12sp"
+                android:layout_marginBottom="10dp" />
+
+            <!-- Spacebar + Number Chords Switch -->
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switch_space_chord"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pref_chord_mode"
+                android:textColor="@color/kawaii_slate"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pref_chord_mode_summary"
+                android:textColor="#555"
+                android:textSize="12sp"
+                android:layout_marginBottom="10dp" />
+
+            <!-- 2-Letter Greenlighting Switch -->
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switch_greenlight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pref_greenlight"
+                android:textColor="@color/kawaii_slate"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pref_greenlight_summary"
+                android:textColor="#555"
+                android:textSize="12sp"
+                android:layout_marginBottom="10dp" />
+
+            <!-- Soft Bzzt Haptic Switch -->
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switch_soft_bzzt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pref_soft_bzzt"
+                android:textColor="@color/kawaii_slate"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pref_soft_bzzt_summary"
+                android:textColor="#555"
+                android:textSize="12sp"
+                android:layout_marginBottom="10dp" />
+
+            <!-- Pre-Send Guard Switch -->
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switch_send_guard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pref_send_guard"
+                android:textColor="@color/kawaii_slate"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pref_send_guard_summary"
+                android:textColor="#555"
+                android:textSize="12sp"
+                android:layout_marginBottom="10dp" />
+
+            <!-- Zero Post-Commit Rewriting Lock Card Banner -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_candidate_greenlit"
+                android:padding="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔒 Zero Post-Commit Rewriting: ACTIVE"
+                    android:textColor="@color/kawaii_gold"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Kit-IME never retroactively rewrites, autocorrects, or flips committed words (e.g., 'its' vs 'it\'s', plurals, or exact verbatim user phrasing are 100% preserved)."
+                    android:textColor="@color/kawaii_gold"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- 3. Cast Slots & TextExpander Quick Editor Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/kawaii_card_bg"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="3. Cast Slots &amp; TextExpander ⚡"
+                android:textColor="@color/kawaii_slate"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Quick variables &amp; snippet expansions ({{clip}}, {{date}}, {{time}}, {{name}}, {{email}})."
+                android:textColor="#555"
+                android:textSize="12sp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Cast Slots Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <EditText
+                    android:id="@+id/edit_char1"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="&lt;char1&gt;"
+                    android:textSize="12sp"
+                    android:textColor="@color/kawaii_slate"
+                    android:background="@drawable/bg_ime_panel"
+                    android:padding="8dp"
+                    android:singleLine="true" />
+
+                <EditText
+                    android:id="@+id/edit_char2"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:hint="&lt;char2&gt;"
+                    android:textSize="12sp"
+                    android:textColor="@color/kawaii_slate"
+                    android:background="@drawable/bg_ime_panel"
+                    android:padding="8dp"
+                    android:singleLine="true" />
+
+                <EditText
+                    android:id="@+id/edit_loc1"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:hint="&lt;loc1&gt;"
+                    android:textSize="12sp"
+                    android:textColor="@color/kawaii_slate"
+                    android:background="@drawable/bg_ime_panel"
+                    android:padding="8dp"
+                    android:singleLine="true" />
+            </LinearLayout>
+
+            <EditText
+                android:id="@+id/edit_snippets"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint=";date={{date}}&#10;;clip={{clip}}&#10;;sig=Best, {{name}}"
+                android:textSize="12sp"
+                android:textColor="@color/kawaii_slate"
+                android:textColorHint="#888"
+                android:background="@drawable/bg_ime_panel"
+                android:padding="8dp"
+                android:minLines="3"
+                android:gravity="top|start"
+                android:inputType="textMultiLine"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btn_save_expander"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Save Slots &amp; Expander Snippets 💾"
+                android:textColor="@color/kawaii_gold"
+                android:backgroundTint="@color/kawaii_indigo" />
+        </LinearLayout>
+
+        <!-- 4. Predictor, Corpus & Firebase Sync Hub Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/kawaii_card_bg"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="4. Predictor, Corpus &amp; Firebase Sync 🐾"
                 android:textColor="@color/kawaii_slate"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -189,9 +398,23 @@
                 android:textColorHint="#888"
                 android:background="@drawable/bg_ime_panel"
                 android:padding="8dp"
-                android:minLines="3"
+                android:minLines="2"
                 android:gravity="top|start"
                 android:inputType="textMultiLine|textUri"
+                android:layout_marginBottom="6dp" />
+
+            <!-- Apps Script Auth Token -->
+            <EditText
+                android:id="@+id/edit_apps_script_token"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/hint_apps_script_token"
+                android:textSize="12sp"
+                android:textColor="@color/kawaii_slate"
+                android:textColorHint="#888"
+                android:background="@drawable/bg_ime_panel"
+                android:padding="8dp"
+                android:singleLine="true"
                 android:layout_marginBottom="8dp" />
 
             <!-- Button: Sync Google Docs Corpus Now -->
@@ -202,39 +425,72 @@
                 android:text="@string/btn_sync_google_docs"
                 android:textColor="@color/kawaii_gold"
                 android:backgroundTint="@color/kawaii_pink"
-                android:layout_marginBottom="12dp" />
-
-            <!-- Action 1: Grant SMS Permission -->
-            <Button
-                android:id="@+id/btn_grant_sms"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/btn_grant_sms"
-                android:textColor="@color/kawaii_gold"
-                android:backgroundTint="@color/kawaii_indigo"
                 android:layout_marginBottom="8dp" />
 
-            <!-- Action 2: Pick SAF Folder -->
-            <Button
-                android:id="@+id/btn_pick_saf"
+            <!-- Gather Local (SMS / SAF / Share) -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/btn_pick_saf"
-                android:textColor="@color/kawaii_gold"
-                android:backgroundTint="@color/kawaii_indigo"
-                android:layout_marginBottom="8dp" />
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
 
-            <!-- Action 2b: Import Google Doc / Corpus File -->
-            <Button
-                android:id="@+id/btn_import_file"
+                <Button
+                    android:id="@+id/btn_run_gather_now"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Gather Local 🐾"
+                    android:textColor="@color/kawaii_gold"
+                    android:backgroundTint="@color/kawaii_indigo" />
+
+                <Button
+                    android:id="@+id/btn_pick_saf"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:text="Pick SAF Folder"
+                    android:textColor="@color/kawaii_slate"
+                    android:backgroundTint="@color/kawaii_lavender" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Import Google Doc / File from Drive 📄"
-                android:textColor="@color/kawaii_slate"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <Button
+                    android:id="@+id/btn_grant_sms"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Grant SMS 📱"
+                    android:textColor="@color/kawaii_gold"
+                    android:backgroundTint="@color/kawaii_indigo" />
+
+                <Button
+                    android:id="@+id/btn_import_file"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:text="Import File 📄"
+                    android:textColor="@color/kawaii_slate"
+                    android:backgroundTint="@color/kawaii_lavender" />
+            </LinearLayout>
+
+            <!-- Flush Firebase Deltas Card Button with Pending Count & Timestamp -->
+            <Button
+                android:id="@+id/btn_flush_firebase"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Flush Firebase Deltas (0 pending) 🔥"
+                android:textColor="@color/kawaii_indigo"
                 android:backgroundTint="@color/kawaii_lavender"
                 android:layout_marginBottom="8dp" />
 
-            <!-- Action 3: Sync UserDictionary -->
+            <!-- Sync UserDictionary -->
             <Button
                 android:id="@+id/btn_sync_user_dict"
                 android:layout_width="match_parent"
@@ -244,32 +500,12 @@
                 android:backgroundTint="@color/kawaii_lavender"
                 android:layout_marginBottom="8dp" />
 
-            <!-- Action 4: Run Gather Now -->
-            <Button
-                android:id="@+id/btn_run_gather_now"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/btn_run_gather_now"
-                android:textColor="@color/kawaii_gold"
-                android:backgroundTint="@color/kawaii_indigo"
-                android:layout_marginBottom="8dp" />
-
-            <!-- Action 5: Flush Firebase Deltas -->
-            <Button
-                android:id="@+id/btn_flush_firebase"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/btn_flush_firebase"
-                android:textColor="@color/kawaii_indigo"
-                android:backgroundTint="@color/kawaii_lavender"
-                android:layout_marginBottom="8dp" />
-
-            <!-- Action 6: Restore DB Snapshot -->
+            <!-- Snapshot DB & Restore (VACUUM INTO pre-sync + restore picker) -->
             <Button
                 android:id="@+id/btn_restore_snapshot"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/btn_restore_snapshot"
+                android:text="Snapshot DB &amp; Restore 📦"
                 android:textColor="@color/kawaii_gold"
                 android:backgroundTint="@color/kawaii_pink" />
 

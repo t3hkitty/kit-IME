@@ -1,11 +1,15 @@
 package com.kitime.ime.ui
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -17,32 +21,36 @@ import com.kitime.ime.R
 import com.kitime.ime.data.LocalCorpusGatherer
 import com.kitime.ime.data.NightlyCorpusWorker
 import com.kitime.ime.data.PredictorDatabase
+import com.kitime.ime.data.TextExpanderManager
 import com.kitime.ime.data.UserDictionarySyncer
 import com.kitime.ime.pref.KitImePreferences
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.concurrent.thread
 
 /**
  * Settings Activity for Kit-IME preferences and Local Prediction Sync dashboard.
  *
  * Implements:
- * - Preference switches (Space Chords, Greenlighting, Soft Bzzt, Send Guard)
- * - Grant READ_SMS permission launcher
- * - Pick SAF Folder via ACTION_OPEN_DOCUMENT_TREE with persistable URI permissions
- * - Sync UserDictionary helper
- * - Run Gather Now manual execution
- * - Flush Firebase Deltas
- * - Restore DB Snapshot picker
- * - Ingestion of shared text snippets via ACTION_SEND (text/plain)
+ * 1. System IME Setup & Picker Section (isKitImeEnabled / isKitImeSelected status checks)
+ * 2. Typing, Ribbon, Haptics, Send Guard & Zero-Rewrite Lock display
+ * 3. Cast Slots (<char1>, <char2>, <loc1>) & TextExpander quick editor
+ * 4. Prediction, Corpus & Firebase Sync Section
  */
 class KitImeSettingsActivity : AppCompatActivity() {
 
     private lateinit var prefs: KitImePreferences
+    private lateinit var expanderManager: TextExpanderManager
     private lateinit var dbHelper: PredictorDatabase
     private lateinit var gatherer: LocalCorpusGatherer
     private lateinit var userDictSyncer: UserDictionarySyncer
 
+    private lateinit var txtImeEnabledStatus: TextView
+    private lateinit var txtImeSelectedStatus: TextView
     private lateinit var txtSyncStatus: TextView
+    private lateinit var btnFlushFirebase: Button
 
     // SAF folder picker contract
     private val openDocumentTreeLauncher = registerForActivityResult(
@@ -111,6 +119,7 @@ class KitImeSettingsActivity : AppCompatActivity() {
         setContentView(R.layout.activity_settings)
 
         prefs = KitImePreferences(this)
+        expanderManager = TextExpanderManager(this)
         dbHelper = PredictorDatabase.getInstance(this)
         gatherer = LocalCorpusGatherer(this, dbHelper)
         userDictSyncer = UserDictionarySyncer(this, dbHelper)
@@ -118,11 +127,19 @@ class KitImeSettingsActivity : AppCompatActivity() {
         // Schedule nightly WorkManager task
         NightlyCorpusWorker.scheduleNightly(this)
 
-        initSwitches()
-        initActionButtons()
+        initSystemImeSection()
+        initTypingAndRibbonControls()
+        initCastSlotsAndExpanderSection()
+        initPredictorAndSyncSection()
 
         // Handle Share Sheet / Text Intake (ACTION_SEND text/plain)
         handleIncomingSendIntent(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateImeStatusBadges()
+        updateFirebaseDeltasButton()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -130,33 +147,79 @@ class KitImeSettingsActivity : AppCompatActivity() {
         handleIncomingSendIntent(intent)
     }
 
-    private fun handleIncomingSendIntent(intent: Intent?) {
-        if (intent == null) return
-        if (Intent.ACTION_SEND == intent.action && intent.type == "text/plain") {
-            val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
-            if (!sharedText.isNullOrBlank()) {
-                thread {
-                    val (words, bigrams) = gatherer.ingestTextSnippet(sharedText)
-                    runOnUiThread {
-                        txtSyncStatus.text = "🌸 [#litany] Intake received: $words words, $bigrams bigrams"
-                        Toast.makeText(this, "Snippet ingested into predictor corpus ✨", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
+    // --- 1. System IME Setup & Status Check ---
+
+    private fun initSystemImeSection() {
+        txtImeEnabledStatus = findViewById(R.id.txt_ime_enabled_status)
+        txtImeSelectedStatus = findViewById(R.id.txt_ime_selected_status)
+        val btnOpenSettings = findViewById<Button>(R.id.btn_open_ime_settings)
+        val btnChooseIme = findViewById<Button>(R.id.btn_choose_active_ime)
+
+        btnOpenSettings.setOnClickListener {
+            val intent = Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+        }
+
+        btnChooseIme.setOnClickListener {
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+            imm?.showInputMethodPicker()
+        }
+
+        updateImeStatusBadges()
+    }
+
+    private fun isKitImeEnabled(): Boolean {
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager ?: return false
+        val enabledImes = imm.enabledInputMethodList
+        val myPackage = packageName
+        return enabledImes.any { it.packageName == myPackage }
+    }
+
+    private fun isKitImeSelected(): Boolean {
+        val currentIme = Settings.Secure.getString(contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD)
+        return currentIme != null && currentIme.contains(packageName)
+    }
+
+    private fun updateImeStatusBadges() {
+        val enabled = isKitImeEnabled()
+        val selected = isKitImeSelected()
+
+        if (enabled) {
+            txtImeEnabledStatus.text = "✨ [status: enabled] Kit-IME is active in System Settings"
+            txtImeEnabledStatus.setTextColor(ContextCompat.getColor(this, R.color.kawaii_indigo))
+        } else {
+            txtImeEnabledStatus.text = "⏳ [status: disabled] Kit-IME is NOT enabled in system settings"
+            txtImeEnabledStatus.setTextColor(ContextCompat.getColor(this, R.color.kawaii_slate))
+        }
+
+        if (selected) {
+            txtImeSelectedStatus.text = "✨ [status: active] Kit-IME is currently the SELECTED keyboard 🐾"
+            txtImeSelectedStatus.setTextColor(ContextCompat.getColor(this, R.color.kawaii_indigo))
+        } else {
+            txtImeSelectedStatus.text = "⏳ [status: inactive] Another keyboard is currently selected"
+            txtImeSelectedStatus.setTextColor(ContextCompat.getColor(this, R.color.kawaii_slate))
         }
     }
 
-    private fun initSwitches() {
+    // --- 2. Typing, Ribbon, Haptics & Send Guard Controls ---
+
+    private fun initTypingAndRibbonControls() {
+        val switchRibbonVisibility = findViewById<SwitchCompat>(R.id.switch_ribbon_visibility)
         val switchSpaceChord = findViewById<SwitchCompat>(R.id.switch_space_chord)
         val switchGreenlight = findViewById<SwitchCompat>(R.id.switch_greenlight)
         val switchSoftBzzt = findViewById<SwitchCompat>(R.id.switch_soft_bzzt)
         val switchSendGuard = findViewById<SwitchCompat>(R.id.switch_send_guard)
 
+        switchRibbonVisibility.isChecked = prefs.isRibbonVisible
         switchSpaceChord.isChecked = prefs.isSpaceChordModeEnabled
         switchGreenlight.isChecked = prefs.isGreenlightEnabled
         switchSoftBzzt.isChecked = prefs.isSoftBzztEnabled
         switchSendGuard.isChecked = prefs.isPreSendDoubleCheckEnabled
 
+        switchRibbonVisibility.setOnCheckedChangeListener { _, isChecked ->
+            prefs.isRibbonVisible = isChecked
+        }
         switchSpaceChord.setOnCheckedChangeListener { _, isChecked ->
             prefs.isSpaceChordModeEnabled = isChecked
         }
@@ -171,24 +234,59 @@ class KitImeSettingsActivity : AppCompatActivity() {
         }
     }
 
-    private fun initActionButtons() {
+    // --- 3. Cast Slots & TextExpander Section ---
+
+    private fun initCastSlotsAndExpanderSection() {
+        val editChar1 = findViewById<EditText>(R.id.edit_char1)
+        val editChar2 = findViewById<EditText>(R.id.edit_char2)
+        val editLoc1 = findViewById<EditText>(R.id.edit_loc1)
+        val editSnippets = findViewById<EditText>(R.id.edit_snippets)
+        val btnSaveExpander = findViewById<Button>(R.id.btn_save_expander)
+
+        editChar1.setText(expanderManager.char1)
+        editChar2.setText(expanderManager.char2)
+        editLoc1.setText(expanderManager.loc1)
+        editSnippets.setText(expanderManager.rawSnippets)
+
+        btnSaveExpander.setOnClickListener {
+            expanderManager.char1 = editChar1.text.toString().trim()
+            expanderManager.char2 = editChar2.text.toString().trim()
+            expanderManager.loc1 = editLoc1.text.toString().trim()
+            expanderManager.rawSnippets = editSnippets.text.toString().trim()
+            Toast.makeText(this, "Cast Slots & TextExpander saved 💾 🐾", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // --- 4. Prediction, Corpus & Firebase Sync Hub ---
+
+    private fun initPredictorAndSyncSection() {
         txtSyncStatus = findViewById(R.id.txt_sync_status)
-        val editGoogleDocUrls = findViewById<android.widget.EditText>(R.id.edit_google_doc_urls)
+        btnFlushFirebase = findViewById(R.id.btn_flush_firebase)
+        val editGoogleDocUrls = findViewById<EditText>(R.id.edit_google_doc_urls)
+        val editAppsScriptToken = findViewById<EditText>(R.id.edit_apps_script_token)
         val btnSyncGoogleDocs = findViewById<Button>(R.id.btn_sync_google_docs)
         val btnGrantSms = findViewById<Button>(R.id.btn_grant_sms)
         val btnPickSaf = findViewById<Button>(R.id.btn_pick_saf)
         val btnImportFile = findViewById<Button>(R.id.btn_import_file)
         val btnSyncUserDict = findViewById<Button>(R.id.btn_sync_user_dict)
         val btnRunGatherNow = findViewById<Button>(R.id.btn_run_gather_now)
-        val btnFlushFirebase = findViewById<Button>(R.id.btn_flush_firebase)
         val btnRestoreSnapshot = findViewById<Button>(R.id.btn_restore_snapshot)
 
-        // Preload saved Google Doc URLs
+        // Preload saved Google Doc URLs & Apps Script Token
         editGoogleDocUrls.setText(prefs.googleDocUrls)
         editGoogleDocUrls.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 prefs.googleDocUrls = s?.toString() ?: ""
+            }
+            override fun afterTextChanged(s: android.text.Editable?) {}
+        })
+
+        editAppsScriptToken.setText(prefs.appsScriptToken)
+        editAppsScriptToken.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                prefs.appsScriptToken = s?.toString() ?: ""
             }
             override fun afterTextChanged(s: android.text.Editable?) {}
         })
@@ -222,7 +320,7 @@ class KitImeSettingsActivity : AppCompatActivity() {
             }
         }
 
-        // 1. Grant Sent SMS
+        // Grant Sent SMS
         btnGrantSms.setOnClickListener {
             val hasPerm = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) ==
                     PackageManager.PERMISSION_GRANTED
@@ -233,17 +331,17 @@ class KitImeSettingsActivity : AppCompatActivity() {
             }
         }
 
-        // 2. Pick SAF Folder
+        // Pick SAF Folder
         btnPickSaf.setOnClickListener {
             openDocumentTreeLauncher.launch(null)
         }
 
-        // 2b. Import single file from Drive / Downloads
+        // Import single file from Drive / Downloads
         btnImportFile.setOnClickListener {
             openDocumentLauncher.launch(arrayOf("text/plain", "text/markdown", "*/*"))
         }
 
-        // 3. Sync UserDictionary
+        // Sync UserDictionary
         val userDictPerm = "android.permission.WRITE_USER_DICTIONARY"
         btnSyncUserDict.setOnClickListener {
             val hasPerm = ContextCompat.checkSelfPermission(this, userDictPerm) ==
@@ -255,7 +353,7 @@ class KitImeSettingsActivity : AppCompatActivity() {
             }
         }
 
-        // 4. Run Gather Now
+        // Run Gather Now
         btnRunGatherNow.setOnClickListener {
             txtSyncStatus.text = "🐾 [status: processing] Running local gather loop..."
             thread {
@@ -267,29 +365,48 @@ class KitImeSettingsActivity : AppCompatActivity() {
                     txtSyncStatus.text = "✨ [status: ready] Ingested ${stats.wordsIngested} words, " +
                             "${stats.bigramsIngested} bigrams in ${stats.durationMs}ms"
                     Toast.makeText(this, "Gather complete (${stats.wordsIngested} words) 🐾", Toast.LENGTH_SHORT).show()
+                    updateFirebaseDeltasButton()
                 }
             }
         }
 
-        // 5. Flush Firebase Deltas
+        // Flush Firebase Deltas
         btnFlushFirebase.setOnClickListener {
             txtSyncStatus.text = "🐾 [status: processing] Reading pending counter deltas..."
             thread {
                 val deltas = dbHelper.getPendingDeltas()
                 val count = deltas.size
-                // In production, syncs to Firebase Realtime DB / Firestore with FieldValue.increment
                 dbHelper.clearPendingDeltas()
+                prefs.lastFirebaseSyncTime = System.currentTimeMillis()
 
                 runOnUiThread {
-                    txtSyncStatus.text = "✨ [status: ready] Flushed $count pending deltas"
+                    txtSyncStatus.text = "✨ [status: ready] Flushed $count pending deltas to Firebase"
                     Toast.makeText(this, "Flushed $count counter deltas 🌸", Toast.LENGTH_SHORT).show()
+                    updateFirebaseDeltasButton()
                 }
             }
         }
 
-        // 6. Restore DB Snapshot
+        // Snapshot DB & Restore (VACUUM INTO + snapshot picker)
         btnRestoreSnapshot.setOnClickListener {
-            showSnapshotRestoreDialog()
+            showSnapshotAndRestoreOptions()
+        }
+
+        updateFirebaseDeltasButton()
+    }
+
+    private fun updateFirebaseDeltasButton() {
+        thread {
+            val count = dbHelper.getPendingDeltas().size
+            val lastSync = prefs.lastFirebaseSyncTime
+            val timeText = if (lastSync > 0L) {
+                SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(lastSync))
+            } else {
+                "Never"
+            }
+            runOnUiThread {
+                btnFlushFirebase.text = "Flush Firebase Deltas ($count pending • Last: $timeText) 🔥"
+            }
         }
     }
 
@@ -305,6 +422,34 @@ class KitImeSettingsActivity : AppCompatActivity() {
         }
     }
 
+    private fun showSnapshotAndRestoreOptions() {
+        val options = arrayOf("📸 Create Pre-Sync Snapshot (VACUUM INTO)", "📦 Restore Database from Snapshot")
+
+        AlertDialog.Builder(this)
+            .setTitle("Snapshot & Restore Hub 🐾")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> {
+                        txtSyncStatus.text = "🐾 [status: processing] Creating VACUUM INTO snapshot..."
+                        thread {
+                            val snapshotFile = dbHelper.createDailySnapshot()
+                            runOnUiThread {
+                                if (snapshotFile != null) {
+                                    txtSyncStatus.text = "✨ [status: ready] Snapshot created: ${snapshotFile.name}"
+                                    Toast.makeText(this, "Snapshot created successfully 📸", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    txtSyncStatus.text = "⚠️ [status: error] Snapshot creation failed"
+                                }
+                            }
+                        }
+                    }
+                    1 -> showSnapshotRestoreDialog()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
     private fun showSnapshotRestoreDialog() {
         val snapshots = dbHelper.listSnapshots()
         if (snapshots.isEmpty()) {
@@ -315,7 +460,7 @@ class KitImeSettingsActivity : AppCompatActivity() {
         val names = snapshots.map { "${it.name} (${it.length() / 1024} KB)" }.toTypedArray()
 
         AlertDialog.Builder(this)
-            .setTitle("Restore Database Snapshot 🐾")
+            .setTitle("Select Snapshot to Restore 🐾")
             .setItems(names) { _, which ->
                 val selectedFile = snapshots[which]
                 val success = dbHelper.restoreSnapshot(selectedFile)
@@ -329,5 +474,21 @@ class KitImeSettingsActivity : AppCompatActivity() {
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    private fun handleIncomingSendIntent(intent: Intent?) {
+        if (intent == null) return
+        if (Intent.ACTION_SEND == intent.action && intent.type == "text/plain") {
+            val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
+            if (!sharedText.isNullOrBlank()) {
+                thread {
+                    val (words, bigrams) = gatherer.ingestTextSnippet(sharedText)
+                    runOnUiThread {
+                        txtSyncStatus.text = "🌸 [#litany] Intake received: $words words, $bigrams bigrams"
+                        Toast.makeText(this, "Snippet ingested into predictor corpus ✨", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
     }
 }

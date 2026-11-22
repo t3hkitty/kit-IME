@@ -19,8 +19,11 @@ class KitImePreferences(context: Context) {
         const val KEY_SOFT_BZZT_ENABLED = "pref_soft_bzzt_enabled"
         const val KEY_PRE_SEND_DOUBLE_CHECK = "pref_pre_send_double_check"
         const val KEY_HIDE_SOFT_KBD_PHYSICAL = "pref_hide_soft_kbd_physical"
+        const val KEY_RIBBON_VISIBLE = "pref_ribbon_visible"
         const val KEY_SAF_FOLDER_URI = "pref_saf_folder_uri"
         const val KEY_GOOGLE_DOC_URLS = "pref_google_doc_urls"
+        const val KEY_APPS_SCRIPT_TOKEN = "pref_apps_script_token"
+        const val KEY_LAST_FIREBASE_SYNC_TIME = "pref_last_firebase_sync_time"
 
         // Default values
         const val DEFAULT_SPACE_CHORD_MODE = true
@@ -28,6 +31,7 @@ class KitImePreferences(context: Context) {
         const val DEFAULT_SOFT_BZZT_ENABLED = true
         const val DEFAULT_PRE_SEND_DOUBLE_CHECK = true
         const val DEFAULT_HIDE_SOFT_KBD_PHYSICAL = false
+        const val DEFAULT_RIBBON_VISIBLE = true
     }
 
     var safFolderUri: String?
@@ -63,6 +67,18 @@ class KitImePreferences(context: Context) {
     var isHideSoftKbdOnPhysicalEnabled: Boolean
         get() = prefs.getBoolean(KEY_HIDE_SOFT_KBD_PHYSICAL, DEFAULT_HIDE_SOFT_KBD_PHYSICAL)
         set(value) = prefs.edit().putBoolean(KEY_HIDE_SOFT_KBD_PHYSICAL, value).apply()
+
+    var isRibbonVisible: Boolean
+        get() = prefs.getBoolean(KEY_RIBBON_VISIBLE, DEFAULT_RIBBON_VISIBLE)
+        set(value) = prefs.edit().putBoolean(KEY_RIBBON_VISIBLE, value).apply()
+
+    var appsScriptToken: String
+        get() = prefs.getString(KEY_APPS_SCRIPT_TOKEN, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_APPS_SCRIPT_TOKEN, value).apply()
+
+    var lastFirebaseSyncTime: Long
+        get() = prefs.getLong(KEY_LAST_FIREBASE_SYNC_TIME, 0L)
+        set(value) = prefs.edit().putLong(KEY_LAST_FIREBASE_SYNC_TIME, value).apply()
 
     fun registerListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
         prefs.registerOnSharedPreferenceChangeListener(listener)
