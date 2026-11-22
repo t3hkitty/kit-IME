@@ -10,6 +10,8 @@
     <string name="pref_soft_bzzt_summary">Subtle 18ms tactile pulse on mistyped word boundary without text mutation</string>
     <string name="pref_send_guard">Double-Check Before Send</string>
     <string name="pref_send_guard_summary">Surface preview verification bar before IME_ACTION_SEND</string>
+    <string name="pref_hide_soft_kbd_physical">Hide Soft Keyboard on Physical Input</string>
+    <string name="pref_hide_soft_kbd_physical_summary">Hide the on-screen keyboard when a physical or remote keyboard is connected (Default: off)</string>
     <string name="pref_data_sync_title">Predictor &amp; Device Data Sync 🐾</string>
     <string name="btn_grant_sms">Grant Sent SMS Permission</string>
     <string name="btn_pick_saf">Pick SAF Notes Folder</string>

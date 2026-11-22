@@ -18,6 +18,7 @@ class KitImePreferences(context: Context) {
         const val KEY_GREENLIGHT_ENABLED = "pref_greenlight_enabled"
         const val KEY_SOFT_BZZT_ENABLED = "pref_soft_bzzt_enabled"
         const val KEY_PRE_SEND_DOUBLE_CHECK = "pref_pre_send_double_check"
+        const val KEY_HIDE_SOFT_KBD_PHYSICAL = "pref_hide_soft_kbd_physical"
         const val KEY_SAF_FOLDER_URI = "pref_saf_folder_uri"
         const val KEY_GOOGLE_DOC_URLS = "pref_google_doc_urls"
 
@@ -26,6 +27,7 @@ class KitImePreferences(context: Context) {
         const val DEFAULT_GREENLIGHT_ENABLED = true
         const val DEFAULT_SOFT_BZZT_ENABLED = true
         const val DEFAULT_PRE_SEND_DOUBLE_CHECK = true
+        const val DEFAULT_HIDE_SOFT_KBD_PHYSICAL = false
     }
 
     var safFolderUri: String?
@@ -57,6 +59,10 @@ class KitImePreferences(context: Context) {
     var isPreSendDoubleCheckEnabled: Boolean
         get() = prefs.getBoolean(KEY_PRE_SEND_DOUBLE_CHECK, DEFAULT_PRE_SEND_DOUBLE_CHECK)
         set(value) = prefs.edit().putBoolean(KEY_PRE_SEND_DOUBLE_CHECK, value).apply()
+
+    var isHideSoftKbdOnPhysicalEnabled: Boolean
+        get() = prefs.getBoolean(KEY_HIDE_SOFT_KBD_PHYSICAL, DEFAULT_HIDE_SOFT_KBD_PHYSICAL)
+        set(value) = prefs.edit().putBoolean(KEY_HIDE_SOFT_KBD_PHYSICAL, value).apply()
 
     fun registerListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
         prefs.registerOnSharedPreferenceChangeListener(listener)

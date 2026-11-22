@@ -16,6 +16,7 @@ import com.kitime.ime.bridge.RibbonSlot
 import com.kitime.ime.bridge.TriSplitCandidates
 import com.kitime.ime.haptic.SoftBzztHaptic
 import com.kitime.ime.pref.KitImePreferences
+import com.kitime.ime.ui.SoftKeyGridView
 import com.kitime.ime.ui.TriSplitRibbonView
 
 /**
@@ -27,8 +28,9 @@ import com.kitime.ime.ui.TriSplitRibbonView
  * - Hardware key routing & Spacebar + Number candidate chord selection.
  * - Soft spelling bzzt haptic on badly spelled/unrecognized word boundaries.
  * - Scaffold for 2-letter greenlighting and Double-Check Before Send.
+ * - On-screen soft key grid always visible unless explicitly hidden by user preference.
  */
-class KitImeService : InputMethodService(), PhysicalKeyListener {
+class KitImeService : InputMethodService(), PhysicalKeyListener, SoftKeyGridView.KeyActionListener {
 
     private lateinit var prefs: KitImePreferences
     private lateinit var haptic: SoftBzztHaptic
@@ -37,6 +39,7 @@ class KitImeService : InputMethodService(), PhysicalKeyListener {
 
     private var rootView: View? = null
     private var ribbonView: TriSplitRibbonView? = null
+    private var softKeyGrid: SoftKeyGridView? = null
     private var sendGuardBar: LinearLayout? = null
     private var btnSendConfirm: Button? = null
     private var btnSendCancel: Button? = null
@@ -58,17 +61,40 @@ class KitImeService : InputMethodService(), PhysicalKeyListener {
         )
     }
 
+    /**
+     * Prevents KDE Connect's Remote Input channel or physical keyboard connections
+     * from suppressing the on-screen key grid and ribbon.
+     */
+    override fun onEvaluateInputViewShown(): Boolean {
+        super.onEvaluateInputViewShown()
+        // If user explicitly chose to hide soft keyboard when physical input is active
+        if (prefs.isHideSoftKbdOnPhysicalEnabled) {
+            val config = resources.configuration
+            return !(config.keyboard == android.content.res.Configuration.KEYBOARD_QWERTY &&
+                    config.hardKeyboardHidden == android.content.res.Configuration.HARDKEYBOARDHIDDEN_NO)
+        }
+        // By default, always keep on-screen view shown
+        return true
+    }
+
     override fun onCreateInputView(): View {
         val view = layoutInflater.inflate(R.layout.view_ime_panel, null)
         rootView = view
         ribbonView = view.findViewById(R.id.tri_split_ribbon)
+        softKeyGrid = view.findViewById(R.id.soft_key_grid)
         sendGuardBar = view.findViewById(R.id.layout_send_guard_bar)
         btnSendConfirm = view.findViewById(R.id.btn_send_confirm)
         btnSendCancel = view.findViewById(R.id.btn_send_cancel)
 
+        // Ensure both the ribbon and soft key grid are explicitly set to View.VISIBLE
+        ribbonView?.visibility = View.VISIBLE
+        softKeyGrid?.visibility = View.VISIBLE
+
         ribbonView?.onCandidateSelectedListener = { candidate ->
             onCommitCandidate(candidate)
         }
+
+        softKeyGrid?.keyActionListener = this
 
         btnSendConfirm?.setOnClickListener {
             onPerformSendAction()
@@ -79,6 +105,34 @@ class KitImeService : InputMethodService(), PhysicalKeyListener {
         }
 
         return view
+    }
+
+    // --- SoftKeyGridView.KeyActionListener Implementations ---
+
+    override fun onCharacterKey(char: String) {
+        val ic = currentInputConnection ?: return
+        ic.commitText(char, 1)
+        refreshCurrentInputPrefix()
+    }
+
+    override fun onBackspaceKey() {
+        val ic = currentInputConnection ?: return
+        ic.deleteSurroundingText(1, 0)
+        refreshCurrentInputPrefix()
+    }
+
+    override fun onSpaceKey() {
+        onSpaceNormalCommit()
+    }
+
+    override fun onEnterKey() {
+        val ic = currentInputConnection ?: return
+        if (prefs.isPreSendDoubleCheckEnabled && !isDoubleCheckActive) {
+            onToggleDoubleCheck()
+        } else {
+            ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
+            ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
+        }
     }
 
     override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
