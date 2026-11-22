@@ -6,6 +6,7 @@
     <style name="Theme.KitIme.Settings" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/kawaii_indigo</item>
         <item name="colorSecondary">@color/kawaii_lavender</item>
+        <item name="colorAccent">@color/kawaii_pink</item>
         <item name="android:statusBarColor">@color/kawaii_indigo</item>
         <item name="android:windowBackground">@color/kawaii_gold</item>
     </style>

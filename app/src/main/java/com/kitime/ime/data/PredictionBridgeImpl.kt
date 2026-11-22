@@ -29,12 +29,16 @@ class PredictionDbBridge(
 
         val eng = engine
         if (eng != null) {
-            val prevWord = extractPreviousWord(contextBefore)
-            val sentencePos = determineSentencePos(contextBefore)
-            return eng.predict(prefix, prevWord, sentencePos)
+            try {
+                val prevWord = extractPreviousWord(contextBefore)
+                val sentencePos = determineSentencePos(contextBefore)
+                return eng.predict(prefix, prevWord, sentencePos)
+            } catch (e: Throwable) {
+                android.util.Log.e("PredictionBridge", "Database error during candidate query, falling back to heuristic", e)
+            }
         }
 
-        // Lightweight fallback when running without Android Context (e.g., in unit tests)
+        // Lightweight fallback when running without Android Context or on SQLite error
         val cleanPrefix = prefix.trim()
         val greenlit = cleanPrefix.length >= 2
         val primaryText = cleanPrefix
@@ -56,35 +60,43 @@ class PredictionDbBridge(
 
     override fun isUnrecognizedWord(token: String): Boolean {
         if (engine != null) {
-            return engine.isUnrecognizedWord(token)
+            try {
+                return engine.isUnrecognizedWord(token)
+            } catch (e: Throwable) {
+                android.util.Log.e("PredictionBridge", "Error in isUnrecognizedWord", e)
+            }
         }
         if (token.isBlank() || token.length < 2) return false
         return Regex("(.)\\1\\1").containsMatchIn(token)
     }
 
     override fun recordCommit(token: String, candidateSelected: Boolean, slot: RibbonSlot?) {
-        val clean = token.trim()
-        if (clean.isBlank()) return
+        try {
+            val clean = token.trim()
+            if (clean.isBlank()) return
 
-        val prevWord = previousCommittedWord
-        val pos = if (prevWord == null) SentencePos.START else SentencePos.MID
+            val prevWord = previousCommittedWord
+            val pos = if (prevWord == null) SentencePos.START else SentencePos.MID
 
-        engine?.onWordConfirmed(
-            word = clean,
-            prevWord = prevWord,
-            sentencePos = pos,
-            wasCandidateTap = candidateSelected
-        )
-
-        if (candidateSelected && slot == RibbonSlot.LEFT_TYPO_RESCUE && prevWord != null) {
-            engine?.onSlipCorrected(
-                badToken = prevWord,
-                intendedToken = clean,
-                slipType = "ribbon_rescue"
+            engine?.onWordConfirmed(
+                word = clean,
+                prevWord = prevWord,
+                sentencePos = pos,
+                wasCandidateTap = candidateSelected
             )
-        }
 
-        previousCommittedWord = clean
+            if (candidateSelected && slot == RibbonSlot.LEFT_TYPO_RESCUE && prevWord != null) {
+                engine?.onSlipCorrected(
+                    badToken = prevWord,
+                    intendedToken = clean,
+                    slipType = "ribbon_rescue"
+                )
+            }
+
+            previousCommittedWord = clean
+        } catch (e: Throwable) {
+            android.util.Log.e("PredictionBridge", "Error recording commit", e)
+        }
     }
 
     override fun exportSnapshot(): ByteArray {

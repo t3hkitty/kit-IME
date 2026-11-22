@@ -180,82 +180,118 @@ class KitImeService : InputMethodService(), PhysicalKeyListener, SoftKeyGridView
 
     override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
-        keyRouter.reset()
-        isDoubleCheckActive = false
-        sendGuardBar?.visibility = View.GONE
-        updateCandidates("")
+        try {
+            keyRouter.reset()
+            isDoubleCheckActive = false
+            sendGuardBar?.visibility = View.GONE
+            updateCandidates("")
+        } catch (e: Throwable) {
+            android.util.Log.e("KitImeService", "Error in onStartInput", e)
+        }
     }
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
-        keyRouter.isChordModeEnabled = prefs.isSpaceChordModeEnabled
-        keyRouter.isGreenlightEnabled = prefs.isGreenlightEnabled
+        try {
+            keyRouter.isChordModeEnabled = prefs.isSpaceChordModeEnabled
+            keyRouter.isGreenlightEnabled = prefs.isGreenlightEnabled
 
-        // Re-apply theme in case it changed in Settings
-        applyCurrentTheme()
+            // Re-apply theme in case it changed in Settings
+            applyCurrentTheme()
 
-        refreshCurrentInputPrefix()
+            refreshCurrentInputPrefix()
+        } catch (e: Throwable) {
+            android.util.Log.e("KitImeService", "Error in onStartInputView", e)
+        }
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        val consumed = keyRouter.handleKeyDown(
-            keyCode = keyCode,
-            event = event,
-            candidates = currentCandidates,
-            isDoubleCheckShowing = isDoubleCheckActive
-        )
-        if (consumed) return true
+        try {
+            val consumed = keyRouter.handleKeyDown(
+                keyCode = keyCode,
+                event = event,
+                candidates = currentCandidates,
+                isDoubleCheckShowing = isDoubleCheckActive
+            )
+            if (consumed) return true
+        } catch (e: Throwable) {
+            android.util.Log.e("KitImeService", "Error in onKeyDown", e)
+        }
         return super.onKeyDown(keyCode, event)
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
-        val consumed = keyRouter.handleKeyUp(keyCode, event)
-        if (consumed) return true
+        try {
+            val consumed = keyRouter.handleKeyUp(keyCode, event)
+            if (consumed) return true
 
-        mainHandler.post { refreshCurrentInputPrefix() }
+            mainHandler.post { refreshCurrentInputPrefix() }
+        } catch (e: Throwable) {
+            android.util.Log.e("KitImeService", "Error in onKeyUp", e)
+        }
         return super.onKeyUp(keyCode, event)
     }
 
     fun triggerSendGuardOrDispatch() {
-        if (prefs.isPreSendDoubleCheckEnabled && !isDoubleCheckActive) {
-            onToggleDoubleCheck()
-            return
+        try {
+            if (prefs.isPreSendDoubleCheckEnabled && !isDoubleCheckActive) {
+                onToggleDoubleCheck()
+                return
+            }
+            onPerformSendAction()
+        } catch (e: Throwable) {
+            android.util.Log.e("KitImeService", "Error in triggerSendGuardOrDispatch", e)
         }
-        onPerformSendAction()
     }
 
     // --- SoftKeyGridView.KeyActionListener ---
 
     override fun onCharacterKey(char: String) {
-        val ic = currentInputConnection ?: return
-        ic.commitText(char, 1)
-        mainHandler.post { refreshCurrentInputPrefix() }
+        try {
+            val ic = currentInputConnection ?: return
+            ic.commitText(char, 1)
+            mainHandler.post { refreshCurrentInputPrefix() }
+        } catch (e: Throwable) {
+            android.util.Log.e("KitImeService", "Error in onCharacterKey", e)
+        }
     }
 
     override fun onBackspaceKey() {
-        sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL)
-        mainHandler.post { refreshCurrentInputPrefix() }
+        try {
+            sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL)
+            mainHandler.post { refreshCurrentInputPrefix() }
+        } catch (e: Throwable) {
+            android.util.Log.e("KitImeService", "Error in onBackspaceKey", e)
+        }
     }
 
     override fun onSpaceKey() {
-        onSpaceNormalCommit()
+        try {
+            onSpaceNormalCommit()
+        } catch (e: Throwable) {
+            android.util.Log.e("KitImeService", "Error in onSpaceKey", e)
+        }
     }
 
     override fun onEnterKey() {
-        val ic = currentInputConnection ?: return
-        val currentInfo = currentInputEditorInfo
+        try {
+            val ic = currentInputConnection ?: return
+            val currentInfo = currentInputEditorInfo
 
-        val action = currentInfo?.imeOptions?.and(EditorInfo.IME_MASK_ACTION)
-        val isSendAction = action == EditorInfo.IME_ACTION_SEND ||
-                action == EditorInfo.IME_ACTION_DONE ||
-                action == EditorInfo.IME_ACTION_GO
+            val action = currentInfo?.imeOptions?.and(EditorInfo.IME_MASK_ACTION)
+            val isSendAction = action == EditorInfo.IME_ACTION_SEND ||
+                    action == EditorInfo.IME_ACTION_DONE ||
+                    action == EditorInfo.IME_ACTION_GO
 
-        if (isSendAction && prefs.isPreSendDoubleCheckEnabled && !isDoubleCheckActive) {
-            onToggleDoubleCheck()
-        } else if (action != null && action != EditorInfo.IME_ACTION_NONE && action != EditorInfo.IME_ACTION_UNSPECIFIED) {
-            ic.performEditorAction(action)
-        } else {
-            sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
+            if (isSendAction && prefs.isPreSendDoubleCheckEnabled && !isDoubleCheckActive) {
+                onToggleDoubleCheck()
+            } else if (action != null && action != EditorInfo.IME_ACTION_NONE && action != EditorInfo.IME_ACTION_UNSPECIFIED) {
+                ic.performEditorAction(action)
+            } else {
+                sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
+            }
+        } catch (e: Throwable) {
+            android.util.Log.e("KitImeService", "Error in onEnterKey", e)
         }
     }
 
@@ -267,31 +303,39 @@ class KitImeService : InputMethodService(), PhysicalKeyListener, SoftKeyGridView
     // --- PhysicalKeyListener Implementations ---
 
     override fun onCommitCandidate(candidate: Candidate) {
-        val ic = currentInputConnection ?: return
+        try {
+            val ic = currentInputConnection ?: return
 
-        val prefix = getCurrentWordPrefix()
-        if (prefix.isNotEmpty()) {
-            ic.deleteSurroundingText(prefix.length, 0)
+            val prefix = getCurrentWordPrefix()
+            if (prefix.isNotEmpty()) {
+                ic.deleteSurroundingText(prefix.length, 0)
+            }
+
+            ic.commitText(candidate.text, 1)
+            dbBridge.recordCommit(candidate.text, candidateSelected = true, slot = candidate.slot)
+            updateCandidates("")
+        } catch (e: Throwable) {
+            android.util.Log.e("KitImeService", "Error in onCommitCandidate", e)
         }
-
-        ic.commitText(candidate.text, 1)
-        dbBridge.recordCommit(candidate.text, candidateSelected = true, slot = candidate.slot)
-        updateCandidates("")
     }
 
     override fun onSpaceNormalCommit() {
-        val ic = currentInputConnection ?: return
-        val prefix = getCurrentWordPrefix()
+        try {
+            val ic = currentInputConnection ?: return
+            val prefix = getCurrentWordPrefix()
 
-        if (prefix.isNotBlank() && prefs.isSoftBzztEnabled && dbBridge.isUnrecognizedWord(prefix)) {
-            haptic.triggerBzzt()
-        }
+            if (prefix.isNotBlank() && prefs.isSoftBzztEnabled && dbBridge.isUnrecognizedWord(prefix)) {
+                haptic.triggerBzzt()
+            }
 
-        ic.commitText(" ", 1)
-        if (prefix.isNotBlank()) {
-            dbBridge.recordCommit(prefix, candidateSelected = false, slot = null)
+            ic.commitText(" ", 1)
+            if (prefix.isNotBlank()) {
+                dbBridge.recordCommit(prefix, candidateSelected = false, slot = null)
+            }
+            updateCandidates("")
+        } catch (e: Throwable) {
+            android.util.Log.e("KitImeService", "Error in onSpaceNormalCommit", e)
         }
-        updateCandidates("")
     }
 
     override fun onToggleDoubleCheck() {
@@ -320,28 +364,41 @@ class KitImeService : InputMethodService(), PhysicalKeyListener, SoftKeyGridView
     }
 
     private fun refreshCurrentInputPrefix() {
-        val prefix = getCurrentWordPrefix()
-        updateCandidates(prefix)
+        try {
+            val prefix = getCurrentWordPrefix()
+            updateCandidates(prefix)
+        } catch (e: Throwable) {
+            android.util.Log.e("KitImeService", "Error in refreshCurrentInputPrefix", e)
+        }
     }
 
     private fun getCurrentWordPrefix(): String {
-        val ic = currentInputConnection ?: return ""
-        val textBefore = ic.getTextBeforeCursor(40, 0)?.toString() ?: return ""
-        val lastWordMatch = Regex("""\b[\w'-]+$""").find(textBefore)
-        return lastWordMatch?.value ?: ""
+        try {
+            val ic = currentInputConnection ?: return ""
+            val textBefore = ic.getTextBeforeCursor(40, 0)?.toString() ?: return ""
+            val lastWordMatch = Regex("""\b[\w'-]+$""").find(textBefore)
+            return lastWordMatch?.value ?: ""
+        } catch (e: Throwable) {
+            android.util.Log.e("KitImeService", "Error in getCurrentWordPrefix", e)
+            return ""
+        }
     }
 
     private fun updateCandidates(prefix: String) {
-        val ic = currentInputConnection
-        val contextBefore = ic?.getTextBeforeCursor(100, 0)?.toString() ?: ""
+        try {
+            val ic = currentInputConnection
+            val contextBefore = ic?.getTextBeforeCursor(100, 0)?.toString() ?: ""
 
-        val candidates = if (prefix.isNotBlank()) {
-            dbBridge.getCandidates(prefix, contextBefore)
-        } else {
-            TriSplitCandidates()
+            val candidates = if (prefix.isNotBlank()) {
+                dbBridge.getCandidates(prefix, contextBefore)
+            } else {
+                TriSplitCandidates()
+            }
+
+            currentCandidates = candidates
+            ribbonView?.setCandidates(candidates)
+        } catch (e: Throwable) {
+            android.util.Log.e("KitImeService", "Error in updateCandidates", e)
         }
-
-        currentCandidates = candidates
-        ribbonView?.setCandidates(candidates)
     }
 }

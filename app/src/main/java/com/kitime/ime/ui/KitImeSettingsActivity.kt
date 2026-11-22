@@ -124,8 +124,12 @@ class KitImeSettingsActivity : AppCompatActivity() {
         gatherer = LocalCorpusGatherer(this, dbHelper)
         userDictSyncer = UserDictionarySyncer(this, dbHelper)
 
-        // Schedule nightly WorkManager task
-        NightlyCorpusWorker.scheduleNightly(this)
+        // Defensively schedule nightly WorkManager task
+        try {
+            NightlyCorpusWorker.scheduleNightly(this)
+        } catch (e: Throwable) {
+            android.util.Log.e("KitImeSettings", "Failed to schedule NightlyCorpusWorker", e)
+        }
 
         initSystemImeSection()
         initTypingAndRibbonControls()
@@ -454,15 +458,19 @@ class KitImeSettingsActivity : AppCompatActivity() {
 
     private fun updateFirebaseDeltasButton() {
         thread {
-            val count = dbHelper.getPendingDeltas().size
-            val lastSync = prefs.lastFirebaseSyncTime
-            val timeText = if (lastSync > 0L) {
-                SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(lastSync))
-            } else {
-                "Never"
-            }
-            runOnUiThread {
-                btnFlushFirebase.text = "Flush Firebase Deltas ($count pending • Last: $timeText) 🔥"
+            try {
+                val count = dbHelper.getPendingDeltas().size
+                val lastSync = prefs.lastFirebaseSyncTime
+                val timeText = if (lastSync > 0L) {
+                    SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(lastSync))
+                } else {
+                    "Never"
+                }
+                runOnUiThread {
+                    btnFlushFirebase.text = "Flush Firebase Deltas ($count pending • Last: $timeText) 🔥"
+                }
+            } catch (e: Throwable) {
+                android.util.Log.e("KitImeSettings", "Failed to update Firebase deltas badge", e)
             }
         }
     }
