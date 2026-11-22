@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_ime_panel"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp">
+
+    <!-- Double-Check Before Send Bar -->
+    <LinearLayout
+        android:id="@+id/layout_send_guard_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:visibility="gone"
+        android:padding="8dp"
+        android:layout_marginBottom="6dp"
+        android:background="@drawable/bg_candidate_greenlit">
+
+        <TextView
+            android:id="@+id/tv_send_guard_prompt"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="✨ Ready to Send? Press Enter / Tap Confirm"
+            android:textColor="@color/kawaii_gold"
+            android:textStyle="bold"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/btn_send_confirm"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="Confirm 🐾"
+            android:textSize="12sp"
+            android:textColor="@color/kawaii_slate"
+            android:backgroundTint="@color/kawaii_greenlight" />
+
+        <Button
+            android:id="@+id/btn_send_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginStart="4dp"
+            android:text="Cancel ✕"
+            android:textSize="12sp"
+            android:textColor="@color/kawaii_lavender"
+            android:backgroundTint="@color/kawaii_slot_bg" />
+    </LinearLayout>
+
+    <!-- Tri-Split Ribbon Shell -->
+    <com.kitime.ime.ui.TriSplitRibbonView
+        android:id="@+id/tri_split_ribbon"
+        android:layout_width="match_parent"
+        android:layout_height="48dp" />
+
+    <!-- Compact soft keyboard auxiliary / status strip -->
+    <LinearLayout
+        android:id="@+id/layout_aux_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingTop="6dp">
+
+        <TextView
+            android:id="@+id/tv_status_badge"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="🐾 Kit-IME • OnePlus 11 5G NA"
+            android:textColor="@color/kawaii_lavender"
+            android:textSize="11sp" />
+
+        <TextView
+            android:id="@+id/tv_chord_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="[Space+1..5 Select]"
+            android:textColor="@color/kawaii_pink"
+            android:textStyle="bold"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+</LinearLayout>

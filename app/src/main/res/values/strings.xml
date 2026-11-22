@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Kit-IME</string>
+    <string name="ime_service_name">Kit-IME Keyboard</string>
+    <string name="settings_title">Kit-IME Settings 🐾</string>
+    <string name="pref_chord_mode">Spacebar + Number Chord Selection</string>
+    <string name="pref_chord_mode_summary">Hold Spacebar and press 1-5 to select candidate slot</string>
+    <string name="pref_greenlight">2-Letter Greenlighting</string>
+    <string name="pref_greenlight_summary">Confidence greenlight hook once prefix reaches 2 letters</string>
+    <string name="pref_soft_bzzt">Soft Spelling &quot;Bzzt&quot; Haptic</string>
+    <string name="pref_soft_bzzt_summary">Subtle 18ms tactile pulse on mistyped word boundary without text mutation</string>
+    <string name="pref_send_guard">Double-Check Before Send</string>
+    <string name="pref_send_guard_summary">Surface preview verification bar before IME_ACTION_SEND</string>
+</resources>

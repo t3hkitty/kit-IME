@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Plump rounded background #2E1A47 -->
+    <path
+        android:fillColor="#2E1A47"
+        android:pathData="M16,0 L92,0 A16,16 0 0 1 108,16 L108,92 A16,16 0 0 1 92,108 L16,108 A16,16 0 0 1 0,92 L0,16 A16,16 0 0 1 16,0 Z" />
+
+    <!-- Cute Neko Ears #E6E6FA -->
+    <path
+        android:fillColor="#E6E6FA"
+        android:pathData="M24,46 L36,18 L50,38 Z" />
+    <path
+        android:fillColor="#FFB7C5"
+        android:pathData="M28,42 L36,24 L44,38 Z" />
+    <path
+        android:fillColor="#E6E6FA"
+        android:pathData="M84,46 L72,18 L58,38 Z" />
+    <path
+        android:fillColor="#FFB7C5"
+        android:pathData="M80,42 L72,24 L64,38 Z" />
+
+    <!-- Neko Face Head -->
+    <path
+        android:fillColor="#E6E6FA"
+        android:pathData="M22,46 C22,34 86,34 86,46 C92,68 90,88 54,88 C18,88 16,68 22,46 Z" />
+
+    <!-- Eyes (Cute Blinking Neko Slits) #1E1E2E -->
+    <path
+        android:fillColor="#1E1E2E"
+        android:pathData="M34,54 C34,50 42,50 42,54 C42,58 34,58 34,54 Z" />
+    <path
+        android:fillColor="#1E1E2E"
+        android:pathData="M66,54 C66,50 74,50 74,54 C74,58 66,58 66,54 Z" />
+
+    <!-- Rosy Cheek Blushes #FF8DA1 -->
+    <path
+        android:fillColor="#FF8DA1"
+        android:pathData="M26,62 C26,59 32,59 32,62 C32,65 26,65 26,62 Z" />
+    <path
+        android:fillColor="#FF8DA1"
+        android:pathData="M76,62 C76,59 82,59 82,62 C82,65 76,65 76,62 Z" />
+
+    <!-- Cute Whiskers -->
+    <path
+        android:strokeColor="#1E1E2E"
+        android:strokeWidth="2"
+        android:pathData="M18,58 L30,60 M18,66 L28,65 M90,58 L78,60 M90,66 L80,65" />
+
+    <!-- Keyboard Spacebar & Tri-Split Ribbon Indicator #FFFBEB -->
+    <path
+        android:fillColor="#FFFBEB"
+        android:pathData="M30,74 L78,74 A4,4 0 0 1 82,78 L82,80 A4,4 0 0 1 78,84 L30,84 A4,4 0 0 1 26,80 L26,78 A4,4 0 0 1 30,74 Z" />
+    <!-- 3 slot dots -->
+    <path
+        android:fillColor="#81C784"
+        android:pathData="M38,79 A2,2 0 1 1 38,78.9" />
+    <path
+        android:fillColor="#BA68C8"
+        android:pathData="M54,79 A2,2 0 1 1 54,78.9" />
+    <path
+        android:fillColor="#FFB74D"
+        android:pathData="M70,79 A2,2 0 1 1 70,78.9" />
+</vector>

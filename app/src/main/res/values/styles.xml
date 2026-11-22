@@ -1,0 +1,12 @@
+<resources>
+    <style name="Theme.KitIme" parent="android:Theme.DeviceDefault.InputMethod">
+        <item name="android:colorBackground">@color/kawaii_indigo</item>
+    </style>
+
+    <style name="Theme.KitIme.Settings" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/kawaii_indigo</item>
+        <item name="colorSecondary">@color/kawaii_lavender</item>
+        <item name="android:statusBarColor">@color/kawaii_indigo</item>
+        <item name="android:windowBackground">@color/kawaii_gold</item>
+    </style>
+</resources>
