@@ -6,8 +6,8 @@
     android:orientation="vertical"
     android:background="@drawable/bg_ime_panel"
     android:visibility="visible"
-    android:paddingTop="6dp"
-    android:paddingBottom="6dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp"
     android:paddingStart="4dp"
     android:paddingEnd="4dp">
 
@@ -20,7 +20,7 @@
         android:gravity="center_vertical"
         android:visibility="gone"
         android:padding="8dp"
-        android:layout_marginBottom="6dp"
+        android:layout_marginBottom="4dp"
         android:background="@drawable/bg_candidate_greenlit">
 
         <TextView
@@ -53,44 +53,80 @@
             android:backgroundTint="@color/kawaii_slot_bg" />
     </LinearLayout>
 
+    <!-- Gboard-Style Quick Actions & Toolbar Bar -->
+    <LinearLayout
+        android:id="@+id/layout_quick_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="32dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="2dp"
+        android:paddingEnd="2dp"
+        android:layout_marginBottom="2dp">
+
+        <!-- Arrows Pad Toggle Button -->
+        <Button
+            android:id="@+id/btn_toolbar_arrows"
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:text="Arrows ⤹"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/kawaii_slate"
+            android:backgroundTint="@color/kawaii_pink"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:layout_marginEnd="4dp" />
+
+        <!-- Emoji Drawer Toggle Button -->
+        <Button
+            android:id="@+id/btn_toolbar_emoji"
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:text="🌸 Emoji"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/kawaii_slate"
+            android:backgroundTint="@color/kawaii_lavender"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:layout_marginEnd="4dp" />
+
+        <!-- Clipboard Shelf Toggle Button -->
+        <Button
+            android:id="@+id/btn_toolbar_clipboard"
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:text="📋 Shelf"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/kawaii_slate"
+            android:backgroundTint="@color/kawaii_lavender"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:layout_marginEnd="4dp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/tv_chord_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="[Space+1..5]"
+            android:textColor="@color/kawaii_pink"
+            android:textStyle="bold"
+            android:textSize="10sp" />
+    </LinearLayout>
+
     <!-- Tri-Split Ribbon Shell -->
     <com.kitime.ime.ui.TriSplitRibbonView
         android:id="@+id/tri_split_ribbon"
         android:layout_width="match_parent"
         android:layout_height="44dp"
         android:visibility="visible" />
-
-    <!-- Compact soft keyboard auxiliary / status strip -->
-    <LinearLayout
-        android:id="@+id/layout_aux_bar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:visibility="visible"
-        android:paddingStart="4dp"
-        android:paddingEnd="4dp"
-        android:paddingTop="2dp"
-        android:paddingBottom="2dp">
-
-        <TextView
-            android:id="@+id/tv_status_badge"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="🐾 Kit-IME • OnePlus 11 5G NA"
-            android:textColor="@color/kawaii_lavender"
-            android:textSize="11sp" />
-
-        <TextView
-            android:id="@+id/tv_chord_hint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="[Space+1..5 Select]"
-            android:textColor="@color/kawaii_pink"
-            android:textStyle="bold"
-            android:textSize="11sp" />
-    </LinearLayout>
 
     <!-- Full On-Screen Key Grid -->
     <com.kitime.ime.ui.SoftKeyGridView

@@ -1,5 +1,7 @@
 package com.kitime.ime.core
 
+import android.content.ClipboardManager
+import android.content.Context
 import android.inputmethodservice.InputMethodService
 import android.os.Handler
 import android.os.Looper
@@ -14,21 +16,28 @@ import com.kitime.ime.bridge.Candidate
 import com.kitime.ime.bridge.PredictionDbBridge
 import com.kitime.ime.bridge.RibbonSlot
 import com.kitime.ime.bridge.TriSplitCandidates
+import com.kitime.ime.data.ClipboardShelfManager
 import com.kitime.ime.haptic.SoftBzztHaptic
 import com.kitime.ime.pref.KitImePreferences
+import com.kitime.ime.ui.ArrowPadPopup
+import com.kitime.ime.ui.ClipboardShelfPopup
+import com.kitime.ime.ui.EmojiSymbolDrawer
+import com.kitime.ime.ui.KitTheme
 import com.kitime.ime.ui.SoftKeyGridView
+import com.kitime.ime.ui.ThemeManager
 import com.kitime.ime.ui.TriSplitRibbonView
 
 /**
  * Kit-IME Core InputMethodService.
  *
- * Enforces:
- * - 3-zone prediction ribbon (Typo Rescue, Primary Prediction, Variant)
- * - Zero post-commit rewriting: commits are verbatim strings; never retroactively mutates past text.
- * - Hardware key routing & Spacebar + Number candidate chord selection.
- * - Soft spelling bzzt haptic on badly spelled/unrecognized word boundaries.
- * - Scaffold for 2-letter greenlighting and Double-Check Before Send.
- * - On-screen soft key grid always visible unless explicitly hidden by user preference.
+ * Full-featured daily driver with Gboard-style essentials:
+ * - Selectable Theme palettes applied instantly across all views
+ * - Quick toolbar with Arrows Pad, Emoji & Symbol Drawer, and Clipboard Shelf
+ * - Long-press popups for alternate characters/diacritics
+ * - Zero post-commit rewriting guarantee (commits verbatim strings; never auto-replaces)
+ * - Spacebar + Number 1..5 chording
+ * - Soft 18ms spelling "bzzt" pulse on unrecognized tokens
+ * - Reliable onEvaluateInputViewShown() preventing KDE Connect / hardware drops
  */
 class KitImeService : InputMethodService(), PhysicalKeyListener, SoftKeyGridView.KeyActionListener {
 
@@ -36,6 +45,7 @@ class KitImeService : InputMethodService(), PhysicalKeyListener, SoftKeyGridView
     private lateinit var haptic: SoftBzztHaptic
     private lateinit var dbBridge: PredictionDbBridge
     private lateinit var keyRouter: PhysicalKeyRouter
+    private lateinit var clipboardShelf: ClipboardShelfManager
 
     private var rootView: View? = null
     private var ribbonView: TriSplitRibbonView? = null
@@ -43,6 +53,14 @@ class KitImeService : InputMethodService(), PhysicalKeyListener, SoftKeyGridView
     private var sendGuardBar: LinearLayout? = null
     private var btnSendConfirm: Button? = null
     private var btnSendCancel: Button? = null
+
+    private var btnToolbarArrows: Button? = null
+    private var btnToolbarEmoji: Button? = null
+    private var btnToolbarClipboard: Button? = null
+
+    private var arrowPadPopup: ArrowPadPopup? = null
+    private var emojiDrawer: EmojiSymbolDrawer? = null
+    private var clipboardPopup: ClipboardShelfPopup? = null
 
     private var currentCandidates = TriSplitCandidates()
     private var isDoubleCheckActive = false
@@ -54,26 +72,52 @@ class KitImeService : InputMethodService(), PhysicalKeyListener, SoftKeyGridView
         prefs = KitImePreferences(this)
         haptic = SoftBzztHaptic(this)
         dbBridge = PredictionDbBridge(this)
+        clipboardShelf = ClipboardShelfManager(this)
+
         keyRouter = PhysicalKeyRouter(
             listener = this,
             isChordModeEnabled = prefs.isSpaceChordModeEnabled,
             isGreenlightEnabled = prefs.isGreenlightEnabled
         )
+
+        arrowPadPopup = ArrowPadPopup(
+            context = this,
+            onKeyCommand = { keyCode -> sendDownUpKeyEvents(keyCode) },
+            onTextCommand = { text -> currentInputConnection?.commitText(text, 1) }
+        )
+
+        emojiDrawer = EmojiSymbolDrawer(this) { emoji ->
+            currentInputConnection?.commitText(emoji, 1)
+        }
+
+        clipboardPopup = ClipboardShelfPopup(this, clipboardShelf) { clipText ->
+            currentInputConnection?.commitText(clipText, 1)
+        }
+
+        // Listen for new clipboards to populate the shelf
+        setupClipboardListener()
     }
 
-    /**
-     * Prevents KDE Connect's Remote Input channel or physical keyboard connections
-     * from suppressing the on-screen key grid and ribbon.
-     */
+    private fun setupClipboardListener() {
+        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return
+        cm.addPrimaryClipChangedListener {
+            val clip = cm.primaryClip
+            if (clip != null && clip.itemCount > 0) {
+                val text = clip.getItemAt(0).coerceToText(this)?.toString()
+                if (!text.isNullOrBlank()) {
+                    clipboardShelf.addClip(text)
+                }
+            }
+        }
+    }
+
     override fun onEvaluateInputViewShown(): Boolean {
         super.onEvaluateInputViewShown()
-        // If user explicitly chose to hide soft keyboard when physical input is active
         if (prefs.isHideSoftKbdOnPhysicalEnabled) {
             val config = resources.configuration
             return !(config.keyboard == android.content.res.Configuration.KEYBOARD_QWERTY &&
                     config.hardKeyboardHidden == android.content.res.Configuration.HARDKEYBOARDHIDDEN_NO)
         }
-        // By default, always keep on-screen view shown
         return true
     }
 
@@ -86,15 +130,18 @@ class KitImeService : InputMethodService(), PhysicalKeyListener, SoftKeyGridView
         btnSendConfirm = view.findViewById(R.id.btn_send_confirm)
         btnSendCancel = view.findViewById(R.id.btn_send_cancel)
 
-        // Ensure both the ribbon and soft key grid are explicitly set to View.VISIBLE
-        ribbonView?.visibility = View.VISIBLE
-        softKeyGrid?.visibility = View.VISIBLE
+        btnToolbarArrows = view.findViewById(R.id.btn_toolbar_arrows)
+        btnToolbarEmoji = view.findViewById(R.id.btn_toolbar_emoji)
+        btnToolbarClipboard = view.findViewById(R.id.btn_toolbar_clipboard)
+
+        softKeyGrid?.keyActionListener = this
+
+        // Apply persisted theme palette
+        applyCurrentTheme()
 
         ribbonView?.onCandidateSelectedListener = { candidate ->
             onCommitCandidate(candidate)
         }
-
-        softKeyGrid?.keyActionListener = this
 
         btnSendConfirm?.setOnClickListener {
             onPerformSendAction()
@@ -104,35 +151,31 @@ class KitImeService : InputMethodService(), PhysicalKeyListener, SoftKeyGridView
             onCancelDoubleCheck()
         }
 
+        // Toolbar Buttons
+        btnToolbarArrows?.setOnClickListener {
+            val palette = ThemeManager.getPalette(ThemeManager.fromId(prefs.selectedTheme))
+            arrowPadPopup?.show(view, palette)
+        }
+
+        btnToolbarEmoji?.setOnClickListener {
+            val palette = ThemeManager.getPalette(ThemeManager.fromId(prefs.selectedTheme))
+            emojiDrawer?.show(view, palette)
+        }
+
+        btnToolbarClipboard?.setOnClickListener {
+            val palette = ThemeManager.getPalette(ThemeManager.fromId(prefs.selectedTheme))
+            clipboardPopup?.show(view, palette)
+        }
+
         return view
     }
 
-    // --- SoftKeyGridView.KeyActionListener Implementations ---
+    private fun applyCurrentTheme() {
+        val theme = ThemeManager.fromId(prefs.selectedTheme)
+        val palette = ThemeManager.getPalette(theme)
 
-    override fun onCharacterKey(char: String) {
-        val ic = currentInputConnection ?: return
-        ic.commitText(char, 1)
-        refreshCurrentInputPrefix()
-    }
-
-    override fun onBackspaceKey() {
-        val ic = currentInputConnection ?: return
-        ic.deleteSurroundingText(1, 0)
-        refreshCurrentInputPrefix()
-    }
-
-    override fun onSpaceKey() {
-        onSpaceNormalCommit()
-    }
-
-    override fun onEnterKey() {
-        val ic = currentInputConnection ?: return
-        if (prefs.isPreSendDoubleCheckEnabled && !isDoubleCheckActive) {
-            onToggleDoubleCheck()
-        } else {
-            ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
-            ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
-        }
+        rootView?.setBackgroundColor(palette.rootBackground)
+        softKeyGrid?.applyTheme(theme)
     }
 
     override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
@@ -147,11 +190,14 @@ class KitImeService : InputMethodService(), PhysicalKeyListener, SoftKeyGridView
         super.onStartInputView(info, restarting)
         keyRouter.isChordModeEnabled = prefs.isSpaceChordModeEnabled
         keyRouter.isGreenlightEnabled = prefs.isGreenlightEnabled
+
+        // Re-apply theme in case it changed in Settings
+        applyCurrentTheme()
+
         refreshCurrentInputPrefix()
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        // Physical keyboard event interception
         val consumed = keyRouter.handleKeyDown(
             keyCode = keyCode,
             event = event,
@@ -159,7 +205,6 @@ class KitImeService : InputMethodService(), PhysicalKeyListener, SoftKeyGridView
             isDoubleCheckShowing = isDoubleCheckActive
         )
         if (consumed) return true
-
         return super.onKeyDown(keyCode, event)
     }
 
@@ -167,14 +212,10 @@ class KitImeService : InputMethodService(), PhysicalKeyListener, SoftKeyGridView
         val consumed = keyRouter.handleKeyUp(keyCode, event)
         if (consumed) return true
 
-        // Refresh prefix after hardware keyup
         mainHandler.post { refreshCurrentInputPrefix() }
         return super.onKeyUp(keyCode, event)
     }
 
-    /**
-     * Intercept hardware or software action keys (e.g. Enter with IME_ACTION_SEND).
-     */
     fun triggerSendGuardOrDispatch() {
         if (prefs.isPreSendDoubleCheckEnabled && !isDoubleCheckActive) {
             onToggleDoubleCheck()
@@ -183,25 +224,58 @@ class KitImeService : InputMethodService(), PhysicalKeyListener, SoftKeyGridView
         onPerformSendAction()
     }
 
-    /**
-     * Commit candidate verbatim without any retroactive post-commit rewriting.
-     */
+    // --- SoftKeyGridView.KeyActionListener ---
+
+    override fun onCharacterKey(char: String) {
+        val ic = currentInputConnection ?: return
+        ic.commitText(char, 1)
+        mainHandler.post { refreshCurrentInputPrefix() }
+    }
+
+    override fun onBackspaceKey() {
+        sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL)
+        mainHandler.post { refreshCurrentInputPrefix() }
+    }
+
+    override fun onSpaceKey() {
+        onSpaceNormalCommit()
+    }
+
+    override fun onEnterKey() {
+        val ic = currentInputConnection ?: return
+        val currentInfo = currentInputEditorInfo
+
+        val action = currentInfo?.imeOptions?.and(EditorInfo.IME_MASK_ACTION)
+        val isSendAction = action == EditorInfo.IME_ACTION_SEND ||
+                action == EditorInfo.IME_ACTION_DONE ||
+                action == EditorInfo.IME_ACTION_GO
+
+        if (isSendAction && prefs.isPreSendDoubleCheckEnabled && !isDoubleCheckActive) {
+            onToggleDoubleCheck()
+        } else if (action != null && action != EditorInfo.IME_ACTION_NONE && action != EditorInfo.IME_ACTION_UNSPECIFIED) {
+            ic.performEditorAction(action)
+        } else {
+            sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
+        }
+    }
+
+    override fun onSymbolToggle() {
+        val palette = ThemeManager.getPalette(ThemeManager.fromId(prefs.selectedTheme))
+        emojiDrawer?.show(rootView ?: return, palette)
+    }
+
+    // --- PhysicalKeyListener Implementations ---
+
     override fun onCommitCandidate(candidate: Candidate) {
         val ic = currentInputConnection ?: return
 
-        // 1. Delete currently typed composing prefix (if any)
         val prefix = getCurrentWordPrefix()
         if (prefix.isNotEmpty()) {
             ic.deleteSurroundingText(prefix.length, 0)
         }
 
-        // 2. Commit EXACT candidate text verbatim with zero retroactive changes
         ic.commitText(candidate.text, 1)
-
-        // 3. Inform bridge confirmation sink
         dbBridge.recordCommit(candidate.text, candidateSelected = true, slot = candidate.slot)
-
-        // 4. Update ribbon
         updateCandidates("")
     }
 
@@ -209,17 +283,14 @@ class KitImeService : InputMethodService(), PhysicalKeyListener, SoftKeyGridView
         val ic = currentInputConnection ?: return
         val prefix = getCurrentWordPrefix()
 
-        // Check if word boundary was an unrecognized / badly-spelled token
         if (prefix.isNotBlank() && prefs.isSoftBzztEnabled && dbBridge.isUnrecognizedWord(prefix)) {
             haptic.triggerBzzt()
         }
 
-        // Record normal space boundary commit; zero retroactive rewrites
+        ic.commitText(" ", 1)
         if (prefix.isNotBlank()) {
             dbBridge.recordCommit(prefix, candidateSelected = false, slot = null)
         }
-
-        ic.commitText(" ", 1)
         updateCandidates("")
     }
 
@@ -236,21 +307,15 @@ class KitImeService : InputMethodService(), PhysicalKeyListener, SoftKeyGridView
     override fun onPerformSendAction() {
         isDoubleCheckActive = false
         sendGuardBar?.visibility = View.GONE
-        val ic = currentInputConnection ?: return
-        ic.performEditorAction(EditorInfo.IME_ACTION_SEND)
-    }
 
-    /**
-     * Inspect text before cursor to extract active word prefix token.
-     */
-    private fun getCurrentWordPrefix(): String {
-        val ic = currentInputConnection ?: return ""
-        val textBefore = ic.getTextBeforeCursor(40, 0)?.toString() ?: return ""
-        val lastDelimiterIndex = textBefore.lastIndexOfAny(charArrayOf(' ', '\n', '\t', '.', ',', ';', ':', '!', '?'))
-        return if (lastDelimiterIndex == -1) {
-            textBefore
+        val ic = currentInputConnection ?: return
+        val currentInfo = currentInputEditorInfo
+        val action = currentInfo?.imeOptions?.and(EditorInfo.IME_MASK_ACTION)
+
+        if (action != null && action != EditorInfo.IME_ACTION_NONE && action != EditorInfo.IME_ACTION_UNSPECIFIED) {
+            ic.performEditorAction(action)
         } else {
-            textBefore.substring(lastDelimiterIndex + 1)
+            sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
         }
     }
 
@@ -259,17 +324,24 @@ class KitImeService : InputMethodService(), PhysicalKeyListener, SoftKeyGridView
         updateCandidates(prefix)
     }
 
-    private fun updateCandidates(prefix: String) {
-        val ic = currentInputConnection
-        val contextBefore = ic?.getTextBeforeCursor(80, 0)?.toString() ?: ""
-        currentCandidates = dbBridge.getCandidates(prefix, contextBefore)
-        ribbonView?.setCandidates(currentCandidates)
+    private fun getCurrentWordPrefix(): String {
+        val ic = currentInputConnection ?: return ""
+        val textBefore = ic.getTextBeforeCursor(40, 0)?.toString() ?: return ""
+        val lastWordMatch = Regex("""\b[\w'-]+$""").find(textBefore)
+        return lastWordMatch?.value ?: ""
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        rootView = null
-        ribbonView = null
-        sendGuardBar = null
+    private fun updateCandidates(prefix: String) {
+        val ic = currentInputConnection
+        val contextBefore = ic?.getTextBeforeCursor(100, 0)?.toString() ?: ""
+
+        val candidates = if (prefix.isNotBlank()) {
+            dbBridge.getCandidates(prefix, contextBefore)
+        } else {
+            TriSplitCandidates()
+        }
+
+        currentCandidates = candidates
+        ribbonView?.setCandidates(candidates)
     }
 }

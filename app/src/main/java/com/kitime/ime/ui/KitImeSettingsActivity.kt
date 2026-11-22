@@ -210,6 +210,27 @@ class KitImeSettingsActivity : AppCompatActivity() {
         val switchGreenlight = findViewById<SwitchCompat>(R.id.switch_greenlight)
         val switchSoftBzzt = findViewById<SwitchCompat>(R.id.switch_soft_bzzt)
         val switchSendGuard = findViewById<SwitchCompat>(R.id.switch_send_guard)
+        val spinnerTheme = findViewById<android.widget.Spinner>(R.id.spinner_theme)
+
+        // Setup Theme Picker Spinner
+        val themes = KitTheme.values()
+        val themeTitles = themes.map { it.title }
+        val adapter = android.widget.ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, themeTitles)
+        spinnerTheme.adapter = adapter
+
+        val currentThemeIndex = themes.indexOfFirst { it.id == prefs.selectedTheme }.coerceAtLeast(0)
+        spinnerTheme.setSelection(currentThemeIndex)
+
+        spinnerTheme.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                val selected = themes[position]
+                if (selected.id != prefs.selectedTheme) {
+                    prefs.selectedTheme = selected.id
+                    Toast.makeText(this@KitImeSettingsActivity, "Applied Theme: ${selected.title}", Toast.LENGTH_SHORT).show()
+                }
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
 
         switchRibbonVisibility.isChecked = prefs.isRibbonVisible
         switchSpaceChord.isChecked = prefs.isSpaceChordModeEnabled
@@ -388,6 +409,42 @@ class KitImeSettingsActivity : AppCompatActivity() {
         }
 
         // Snapshot DB & Restore (VACUUM INTO + snapshot picker)
+        val btnImportKeepVault = findViewById<Button>(R.id.btn_import_keep_vault)
+        btnImportKeepVault.setOnClickListener {
+            val safUri = prefs.safFolderUri?.let { Uri.parse(it) }
+            if (safUri == null) {
+                AlertDialog.Builder(this)
+                    .setTitle("Notes Vault Required 🌸")
+                    .setMessage("No notes folder or vault is configured yet. Please tap 'Pick SAF Folder' to select your notes directory or meow-vault first!")
+                    .setPositiveButton("Pick SAF Folder") { _, _ ->
+                        openDocumentTreeLauncher.launch(null)
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+                return@setOnClickListener
+            }
+
+            txtSyncStatus.text = "🐾 [status: processing] Importing Google Keep notes vault..."
+            thread {
+                val importer = com.kitime.ime.data.KeepVaultImporter(this, dbHelper, gatherer)
+                val stats = importer.importKeepVault(safUri)
+                runOnUiThread {
+                    if (stats.errorMessage != null) {
+                        txtSyncStatus.text = "⚠️ [status: error] ${stats.errorMessage}"
+                        Toast.makeText(this, stats.errorMessage, Toast.LENGTH_LONG).show()
+                    } else {
+                        txtSyncStatus.text = "✨ [status: ready] Keep Vault: ${stats.notesImported} notes, " +
+                                "+${stats.wordsIngested} words, +${stats.bigramsIngested} bigrams"
+                        Toast.makeText(
+                            this,
+                            "Imported ${stats.notesImported} Keep notes (+${stats.wordsIngested} words) 📝",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+        }
+
         btnRestoreSnapshot.setOnClickListener {
             showSnapshotAndRestoreOptions()
         }

@@ -5,6 +5,27 @@ All notable changes to **Kit-IME** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to Semantic Versioning.
 
+## [1.3.0-plump] - 2026-11-21
+
+### Added ✨
+- **Gboard-Style Soft Keyboard & Quick Actions Bar (`view_ime_panel.xml`)**:
+  - Quick action toolbar with buttons for **Arrows ⤹**, **🌸 Emoji**, and **📋 Shelf**.
+  - **Themes (`ThemeManager.kt`)**: Instant selectable themes persisted in preferences:
+    - 🌸 Kawaiian Plumpitude (Default Deep Indigo & Soft Lavender)
+    - 🌙 Crisp Dark Slate
+    - ☀️ Soft Light Lavender
+    - ⚡ High Contrast Amber
+  - **Emoji & Symbol Bar (`EmojiSymbolDrawer.kt`)**: Drawer with quick favorite emojis (`🐾`, `🌸`, `✨`, `💜`, `🐱`...) and secondary symbols (`@`, `#`, `$`, `%`...) with verbatim commit.
+  - **Long-Press / Hold-Press Popups (`LongPressPopupView.kt`)**: Hold-press on keys to pop alternate character/diacritic selectors (`3`, `é`, `è`, `ê` for `e`, numbers for top row, punctuation for periods/commas) with zero text mutation.
+- **Pop-Up Arrow Keys Pad (`ArrowPadPopup.kt`)**:
+  - Compact directional arrow pad (`Up`, `Down`, `Left`, `Right`, `Home`, `End`, `Backspace`, `Enter`) sending `KeyEvent.KEYCODE_DPAD_*` for rapid cursor stepping through long texts and drafts.
+- **Clipboard History Shelf & Pinned Clips (`ClipboardShelfManager.kt`, `ClipboardShelfPopup.kt`)**:
+  - Local clipboard history ring with **Pin / Unpin (★/☆)** support, keeping pinned clips permanently at top for quick verbatim paste.
+- **Google Keep Vault Importer (`KeepVaultImporter.kt`)**:
+  - Safe Keep import gated strictly on user-configured notes folder / SAF vault (`meow-vault`). Gated with user prompt if no vault is selected. Strips HTML tags cleanly from `.html`, `.txt`, and `.md` Keep exports and ingests vocabulary into the local database with pre-sync snapshots.
+- **Power User Control Hub (`KitImeSettingsActivity.kt`)**:
+  - Added theme selection spinner and Keep Vault Import action button.
+
 ## [1.2.0-plump] - 2026-11-21
 
 ### Added ✨
@@ -18,8 +39,6 @@ and this project adheres to Semantic Versioning.
   - **"Sync Google Docs Corpus Now 📄"** button triggering instant snapshot creation, crawl, WAL checkpoint, and status feedback.
 - **Enhanced Document Scanner**:
   - Expanded SAF scanner to ingest `.epub` files alongside `.md` and `.txt`.
-- **Legacy Migration**:
-  - Moved desktop `build_predictor_db.py` to `docs/legacy/` to enforce 100% phone-only standalone execution.
 
 ## [1.1.0-plump] - 2026-11-21
 
@@ -36,8 +55,6 @@ and this project adheres to Semantic Versioning.
   - SAF notes directory reader with gentle corpus decay (`0.985`) and boost clamping (`<= 25`).
 - **Android UserDictionary Sync (`UserDictionarySyncer.kt`)**:
   - Synchronizes vocabulary into `android.provider.UserDictionary.Words`.
-- **Google Apps Script Harvest Script (`scripts/google_apps_script_corpus_builder.js`)**:
-  - Script for generating export files directly from Google Drive Docs.
 
 ## [1.0.0-plump] - 2026-11-21
 

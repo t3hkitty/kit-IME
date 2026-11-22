@@ -2,17 +2,19 @@ package com.kitime.ime.ui
 
 import android.content.Context
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
-import androidx.core.content.ContextCompat
 import com.kitime.ime.R
 
 /**
- * On-screen key grid for Kit-IME.
- * Provides QWERTY touch input rows and action keys (Backspace, Enter, Space).
- * Styled in Kawaiian Plumpitude aesthetics.
+ * Enhanced on-screen key grid for Kit-IME.
+ * Supports:
+ * - Dynamic theme palettes (Dark, Light, Kawaii, High-Contrast)
+ * - Long-press popup triggers for alternate characters and diacritics
+ * - QWERTY character keys and action row
  */
 class SoftKeyGridView @JvmOverloads constructor(
     context: Context,
@@ -25,9 +27,17 @@ class SoftKeyGridView @JvmOverloads constructor(
         fun onBackspaceKey()
         fun onSpaceKey()
         fun onEnterKey()
+        fun onSymbolToggle()
     }
 
     var keyActionListener: KeyActionListener? = null
+
+    private var currentTheme: KitTheme = KitTheme.KAWAII_PURPLE
+    private var palette: ThemePalette = ThemeManager.getPalette(currentTheme)
+
+    private val longPressPopup = LongPressPopupView(context) { selectedChar ->
+        keyActionListener?.onCharacterKey(selectedChar)
+    }
 
     private val row1Keys = listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p")
     private val row2Keys = listOf("a", "s", "d", "f", "g", "h", "j", "k", "l")
@@ -42,6 +52,13 @@ class SoftKeyGridView @JvmOverloads constructor(
         buildKeyboardRows()
     }
 
+    fun applyTheme(theme: KitTheme) {
+        currentTheme = theme
+        palette = ThemeManager.getPalette(theme)
+        removeAllViews()
+        buildKeyboardRows()
+    }
+
     private fun buildKeyboardRows() {
         // Row 1
         addView(createKeyRow(row1Keys))
@@ -49,7 +66,7 @@ class SoftKeyGridView @JvmOverloads constructor(
         // Row 2
         addView(createKeyRow(row2Keys))
 
-        // Row 3 (Shift/special indicator, letters, Backspace)
+        // Row 3 (Symbol toggle, letters, Backspace)
         val row3Layout = LinearLayout(context).apply {
             orientation = HORIZONTAL
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT).apply {
@@ -58,8 +75,8 @@ class SoftKeyGridView @JvmOverloads constructor(
         }
 
         // Left spacer/symbol toggle button
-        val symBtn = createActionButton("123", 1.2f) {
-            keyActionListener?.onCharacterKey("?")
+        val symBtn = createActionButton("?123", 1.2f) {
+            keyActionListener?.onSymbolToggle()
         }
         row3Layout.addView(symBtn)
 
@@ -76,7 +93,7 @@ class SoftKeyGridView @JvmOverloads constructor(
         row3Layout.addView(backspaceBtn)
         addView(row3Layout)
 
-        // Row 4 (Auxiliary, Spacebar, Action/Enter)
+        // Row 4 (Comma, Spacebar, Period, Enter)
         val row4Layout = LinearLayout(context).apply {
             orientation = HORIZONTAL
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT).apply {
@@ -120,8 +137,12 @@ class SoftKeyGridView @JvmOverloads constructor(
         return Button(context).apply {
             text = char
             textSize = 18f
-            setTextColor(ContextCompat.getColor(context, R.color.kawaii_lavender))
-            setBackgroundResource(R.drawable.bg_key_button)
+            setTextColor(palette.keyTextColor)
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(8).toFloat()
+                setColor(palette.keyBackground)
+            }
             typeface = Typeface.DEFAULT_BOLD
             isAllCaps = false
             layoutParams = LayoutParams(0, dp(44), weight).apply {
@@ -131,15 +152,23 @@ class SoftKeyGridView @JvmOverloads constructor(
             setOnClickListener {
                 keyActionListener?.onCharacterKey(char)
             }
+            setOnLongClickListener {
+                longPressPopup.show(this, char, palette)
+                true
+            }
         }
     }
 
     private fun createActionButton(label: String, weight: Float, action: () -> Unit): Button {
         return Button(context).apply {
             text = label
-            textSize = 14f
-            setTextColor(ContextCompat.getColor(context, R.color.kawaii_gold))
-            setBackgroundResource(R.drawable.bg_key_action)
+            textSize = 13f
+            setTextColor(palette.actionTextColor)
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(8).toFloat()
+                setColor(palette.actionBackground)
+            }
             typeface = Typeface.DEFAULT_BOLD
             isAllCaps = false
             layoutParams = LayoutParams(0, dp(44), weight).apply {

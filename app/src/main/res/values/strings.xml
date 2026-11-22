@@ -28,4 +28,6 @@
     <string name="hint_google_docs_urls">Paste Google Doc URLs (one per line) or Apps Script Web App manifest URL</string>
     <string name="btn_flush_firebase">Flush Firebase Deltas</string>
     <string name="btn_restore_snapshot">Restore DB Snapshot</string>
+    <string name="btn_import_keep_vault">Import Keep Notes Vault 📝</string>
+    <string name="lbl_theme_selection">Keyboard Theme Palette 🎨</string>
 </resources>

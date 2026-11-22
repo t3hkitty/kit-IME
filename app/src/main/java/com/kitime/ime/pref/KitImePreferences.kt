@@ -20,6 +20,7 @@ class KitImePreferences(context: Context) {
         const val KEY_PRE_SEND_DOUBLE_CHECK = "pref_pre_send_double_check"
         const val KEY_HIDE_SOFT_KBD_PHYSICAL = "pref_hide_soft_kbd_physical"
         const val KEY_RIBBON_VISIBLE = "pref_ribbon_visible"
+        const val KEY_THEME = "pref_theme"
         const val KEY_SAF_FOLDER_URI = "pref_saf_folder_uri"
         const val KEY_GOOGLE_DOC_URLS = "pref_google_doc_urls"
         const val KEY_APPS_SCRIPT_TOKEN = "pref_apps_script_token"
@@ -32,7 +33,12 @@ class KitImePreferences(context: Context) {
         const val DEFAULT_PRE_SEND_DOUBLE_CHECK = true
         const val DEFAULT_HIDE_SOFT_KBD_PHYSICAL = false
         const val DEFAULT_RIBBON_VISIBLE = true
+        const val DEFAULT_THEME = "kawaii_purple"
     }
+
+    var selectedTheme: String
+        get() = prefs.getString(KEY_THEME, DEFAULT_THEME) ?: DEFAULT_THEME
+        set(value) = prefs.edit().putString(KEY_THEME, value).apply()
 
     var safFolderUri: String?
         get() = prefs.getString(KEY_SAF_FOLDER_URI, null)
