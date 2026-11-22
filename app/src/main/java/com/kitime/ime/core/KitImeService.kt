@@ -50,7 +50,7 @@ class KitImeService : InputMethodService(), PhysicalKeyListener {
         super.onCreate()
         prefs = KitImePreferences(this)
         haptic = SoftBzztHaptic(this)
-        dbBridge = PredictionDbBridge()
+        dbBridge = PredictionDbBridge(this)
         keyRouter = PhysicalKeyRouter(
             listener = this,
             isChordModeEnabled = prefs.isSpaceChordModeEnabled,

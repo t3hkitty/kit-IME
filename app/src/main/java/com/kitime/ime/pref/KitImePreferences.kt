@@ -18,12 +18,28 @@ class KitImePreferences(context: Context) {
         const val KEY_GREENLIGHT_ENABLED = "pref_greenlight_enabled"
         const val KEY_SOFT_BZZT_ENABLED = "pref_soft_bzzt_enabled"
         const val KEY_PRE_SEND_DOUBLE_CHECK = "pref_pre_send_double_check"
+        const val KEY_SAF_FOLDER_URI = "pref_saf_folder_uri"
+        const val KEY_GOOGLE_DOC_URLS = "pref_google_doc_urls"
 
         // Default values
         const val DEFAULT_SPACE_CHORD_MODE = true
         const val DEFAULT_GREENLIGHT_ENABLED = true
         const val DEFAULT_SOFT_BZZT_ENABLED = true
         const val DEFAULT_PRE_SEND_DOUBLE_CHECK = true
+    }
+
+    var safFolderUri: String?
+        get() = prefs.getString(KEY_SAF_FOLDER_URI, null)
+        set(value) = prefs.edit().putString(KEY_SAF_FOLDER_URI, value).apply()
+
+    var googleDocUrls: String
+        get() = prefs.getString(KEY_GOOGLE_DOC_URLS, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_GOOGLE_DOC_URLS, value).apply()
+
+    fun getGoogleDocUrlList(): List<String> {
+        return googleDocUrls.lines()
+            .map { it.trim() }
+            .filter { it.isNotBlank() && !it.startsWith("#") }
     }
 
     var isSpaceChordModeEnabled: Boolean

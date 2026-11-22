@@ -84,52 +84,7 @@ interface SnapshotBridge {
 }
 
 /**
- * PredictionDbBridge stub implementation marked as TBD for upcoming DB milestone.
+ * Typealias for default bridge implementation.
  */
-class PredictionDbBridge : CandidateProvider, ConfirmationSink, SnapshotBridge {
+typealias PredictionDbBridge = com.kitime.ime.data.PredictionDbBridge
 
-    override fun getCandidates(prefix: String, contextBefore: String): TriSplitCandidates {
-        if (prefix.isBlank()) return TriSplitCandidates()
-
-        val cleanPrefix = prefix.trim()
-        val greenlit = cleanPrefix.length >= 2
-
-        // Non-destructive scaffold candidates
-        val primaryText = cleanPrefix
-        val typoRescueText = if (cleanPrefix.length > 2) cleanPrefix.lowercase() else cleanPrefix
-        val variantText = when {
-            cleanPrefix.endsWith("s", ignoreCase = true) -> cleanPrefix
-            cleanPrefix.endsWith("t", ignoreCase = true) -> "$cleanPrefix's"
-            else -> "${cleanPrefix}s"
-        }
-
-        return TriSplitCandidates(
-            typoRescue = Candidate(typoRescueText, RibbonSlot.LEFT_TYPO_RESCUE, isGreenlit = false, confidence = 0.6f),
-            primary = Candidate(primaryText, RibbonSlot.CENTER_PRIMARY, isGreenlit = greenlit, confidence = 0.95f),
-            variant = Candidate(variantText, RibbonSlot.RIGHT_VARIANT, isGreenlit = false, confidence = 0.7f),
-            slot4 = Candidate("$cleanPrefix?", RibbonSlot.EXTENDED_FOUR, isGreenlit = false, confidence = 0.4f),
-            slot5 = Candidate("$cleanPrefix!", RibbonSlot.EXTENDED_FIVE, isGreenlit = false, confidence = 0.3f)
-        )
-    }
-
-    override fun isUnrecognizedWord(token: String): Boolean {
-        if (token.isBlank() || token.length < 2) return false
-        // Placeholder check: tokens with 3+ identical consecutive characters or mixed symbols flagged
-        val hasTripleRepeat = Regex("(.)\\1\\1").containsMatchIn(token)
-        return hasTripleRepeat
-    }
-
-    override fun recordCommit(token: String, candidateSelected: Boolean, slot: RibbonSlot?) {
-        // TBD: Wire dual-DB corpus.db + usage.db + typo_confusion predictor in next phase
-    }
-
-    override fun exportSnapshot(): ByteArray {
-        // TBD: Wire dual-DB corpus.db + usage.db + typo_confusion predictor in next phase
-        return ByteArray(0)
-    }
-
-    override fun importSnapshot(data: ByteArray): Boolean {
-        // TBD: Wire dual-DB corpus.db + usage.db + typo_confusion predictor in next phase
-        return true
-    }
-}
